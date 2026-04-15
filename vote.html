@@ -9,6 +9,7 @@
   <!-- Firebase compat SDK (no build step needed) -->
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
   <style>
     /* ── Reset & Variables ─────────────────────────────────────────────── */
@@ -183,6 +184,21 @@
     }
     @keyframes toastIn { from{opacity:0;transform:translateX(-50%) translateY(20px);} to{opacity:1;transform:translateX(-50%) translateY(0);} }
 
+    /* ── QR Code ─────────────────────────────────────────────────────────── */
+    .qr-section { display: flex; justify-content: center; margin-top: 4px; }
+    .qr-card {
+      background: white; border: 3px solid var(--yellow);
+      border-radius: 20px; padding: 16px 28px;
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      box-shadow: 0 4px 20px rgba(255,194,32,0.25);
+    }
+    .qr-label {
+      font-size: 0.85rem; font-weight: 700; color: var(--blue);
+      text-transform: uppercase; letter-spacing: 0.08em;
+    }
+    #qr-code canvas, #qr-code img { border-radius: 8px; border: 2px solid var(--yellow); }
+    .qr-url { font-size: 0.65rem; color: #888; text-align: center; max-width: 180px; word-break: break-all; }
+
     /* ── Responsive ─────────────────────────────────────────────────────── */
     @media (max-width: 620px) {
       .cards-grid { grid-template-columns: 1fr; gap: 16px; }
@@ -351,6 +367,15 @@
 
     </section>
 
+    <!-- QR Code -->
+    <div class="qr-section">
+      <div class="qr-card">
+        <p class="qr-label">📱 Scan to vote on your phone!</p>
+        <div id="qr-code"></div>
+        <p class="qr-url">cyrusmansoor.github.io/cyrus/vote.html</p>
+      </div>
+    </div>
+
     <!-- Reset triggered via URL param: ?reset=true (no visible button) -->
 
   </main>
@@ -368,13 +393,13 @@
   // STEP 1: Replace these values with your Firebase project config
   // Get them from: console.firebase.google.com → your project → Project Settings → Your apps
   const FIREBASE_CONFIG = {
-    apiKey: "AIzaSyDBjNCqObBVS1tVG4foMnbPRWzHcYRyNgY",
-    authDomain: "allhands-vote.firebaseapp.com",
-    databaseURL: "https://allhands-vote-default-rtdb.firebaseio.com",
-    projectId: "allhands-vote",
-    storageBucket: "allhands-vote.firebasestorage.app",
+    apiKey:            "AIzaSyDBjNCqObBVS1tVG4foMnbPRWzHcYRyNgY",
+    authDomain:        "allhands-vote.firebaseapp.com",
+    databaseURL:       "https://allhands-vote-default-rtdb.firebaseio.com",
+    projectId:         "allhands-vote",
+    storageBucket:     "allhands-vote.firebasestorage.app",
     messagingSenderId: "828003354724",
-    appId: "1:828003354724:web:e1a7095c515d05b1e2f771",
+    appId:             "1:828003354724:web:e1a7095c515d05b1e2f771",
   };
 
   // ── Constants ──────────────────────────────────────────────────────────────
@@ -641,9 +666,21 @@
     }
   }
 
+  function initQRCode() {
+    new QRCode(document.getElementById('qr-code'), {
+      text:   'https://cyrusmansoor.github.io/cyrus/vote.html',
+      width:  140,
+      height: 140,
+      colorDark:  '#0053e2',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M,
+    });
+  }
+
   // ── Bootstrap ─────────────────────────────────────────────────────────────
   (function init() {
     initBgNotes();
+    initQRCode();
     initFirebase();
     checkResetParam();
 
