@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -402,8 +403,16 @@
     appId:             "1:828003354724:web:e1a7095c515d05b1e2f771",
   };
 
-  // ── Constants ──────────────────────────────────────────────────────────────
-  const VOTE_KEY = 'allhands-vote-2026-thu'; // change this between sessions to reset local locks
+  // ╔══════════════════════════════════════════════════════════════════════╗
+  // ║  MONTHLY CONFIG — no code changes needed!                           ║
+  // ║  Just add ?session=may-2026 to the URL each month.                  ║
+  // ║  Vote lock & QR code update automatically.                          ║
+  // ╚══════════════════════════════════════════════════════════════════════╝
+  const SESSION   = new URLSearchParams(window.location.search).get('session') || 'default';
+  const VOTE_KEY  = `allhands-vote-${SESSION}`;
+  const RESET_SECRET = 'spark-reset';
+
+  // ── Internal constants (don't change these) ────────────────────────────
   const IDS = [1, 2, 3, 4];
 
   // ── State ──────────────────────────────────────────────────────────────────
@@ -447,7 +456,7 @@
   // ── Real-Time Listener ─────────────────────────────────────────────────────
   function listenToVotes() {
     if (!dbReady) return;
-    db.ref('votes').on('value', snap => {
+    db.ref(`sessions/${SESSION}/votes`).on('value', snap => {
       const data = snap.val() || {};
       IDS.forEach(id => { votes[id] = data[id] || 0; });
       updateUI();
@@ -465,7 +474,7 @@
 
     // Increment in Firebase (transaction prevents race conditions)
     if (dbReady) {
-      db.ref(`votes/${id}`).transaction(count => (count || 0) + 1);
+      db.ref(`sessions/${SESSION}/votes/${id}`).transaction(count => (count || 0) + 1);
     } else {
       // Offline fallback: just show locally
       votes[id]++;
@@ -575,7 +584,7 @@
     if (dbReady) {
       const reset = {};
       IDS.forEach(id => { reset[id] = 0; });
-      db.ref('votes').set(reset);
+      db.ref(`sessions/${SESSION}/votes`).set(reset);
     } else {
       IDS.forEach(id => { votes[id] = 0; });
       updateUI();
@@ -601,7 +610,7 @@
   }
 
   function checkResetParam() {
-    if (new URLSearchParams(window.location.search).get('reset') === 'true') {
+    if (new URLSearchParams(window.location.search).get('reset') === RESET_SECRET) {
       resetVotes();
     }
   }
@@ -668,13 +677,16 @@
 
   function initQRCode() {
     new QRCode(document.getElementById('qr-code'), {
-      text:   'https://cyrusmansoor.github.io/cyrus/vote.html',
+      text:   window.location.href,  // auto-includes ?session= param
       width:  140,
       height: 140,
       colorDark:  '#0053e2',
       colorLight: '#ffffff',
       correctLevel: QRCode.CorrectLevel.M,
     });
+    // Also update the label below the QR to show the clean URL
+    const urlEl = document.querySelector('.qr-url');
+    if (urlEl) urlEl.textContent = window.location.host + window.location.pathname + window.location.search;
   }
 
   // ── Bootstrap ─────────────────────────────────────────────────────────────
